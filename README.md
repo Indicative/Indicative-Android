@@ -7,9 +7,9 @@ Standalone client for Indicative's REST API.  Events are stored in SharedPrefere
 
 Sample usage: 
 
-  Map<String, String> properties = new HashMap<String, String>();
-  properties.put("Age", "23");
-  properties.put("Gender", "Female");
-  Indicative.recordEvent(context, "Registration", "user47", properties);
+    Map<String, String> properties = new HashMap<String, String>();
+    properties.put("Age", "23");
+    properties.put("Gender", "Female");
+    Indicative.recordEvent(context, "Registration", "user47", properties);
   
 For more details, see our documentation at: http://staging.skunkalytics.com/docs/integration.html
