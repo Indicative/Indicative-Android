@@ -19,9 +19,13 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.util.Log;
 
+/**
+ * Async Task to send Events to the Indicative API endpoint.
+ */
+
 public class SendEventAsyncTask extends AsyncTask<Void, Void, Integer> {
 
-	private static final String API_ENDPOINT = "http://api.skunkalytics.com/service/event";
+	private static final String API_ENDPOINT = "https://api.indicative.com/service/event";
 
 	private Context context;
 	private String event;
@@ -30,7 +34,14 @@ public class SendEventAsyncTask extends AsyncTask<Void, Void, Integer> {
 		this.context = context;
 		this.event = event;
 	}
-
+	
+	/**
+	 * Initializes the static Indicative instance with the project's API Key.
+	 * 
+	 * @param params	Not used
+	 * 
+	 * @return 			The status code returned by Indicative
+	 */
 	@Override
 	protected Integer doInBackground(Void... params) {
 		if (Indicative.isDebug()) {
@@ -71,6 +82,10 @@ public class SendEventAsyncTask extends AsyncTask<Void, Void, Integer> {
 		return 400;
 	}
 
+	/**
+	 * Removes the Event from SharedPreferences if it was posted successfully, 
+	 * or if it received a response indicating a non-retriable error.
+	 */
 	@Override
 	protected void onPostExecute(Integer result) {
 
@@ -90,6 +105,13 @@ public class SendEventAsyncTask extends AsyncTask<Void, Void, Integer> {
 		}
 	}
 
+	/**
+	 * Converts the response's input stream to a String for readability.
+	 * 
+	 * @param is	The InputStream
+	 * 
+	 * @return 		A String representation of the InputStream
+	 */
 	private String inputStreamToString(InputStream is) {
 		String line = "";
 		StringBuilder total = new StringBuilder();

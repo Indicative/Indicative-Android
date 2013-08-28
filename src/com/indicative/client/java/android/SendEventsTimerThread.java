@@ -6,6 +6,10 @@ import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
 
+/**
+ * Scheduled timer to periodically send Events to the Indicative API endpoint.
+ */
+
 public class SendEventsTimerThread extends Thread {
 	private Context context;
 	private Handler handler;
@@ -16,6 +20,9 @@ public class SendEventsTimerThread extends Thread {
 		setName("SendEventsTimer");
 	}
 	
+	/**
+	 * For each Event in SharedPreferences, this executes an AsyncTask to send it to the Indicative API endpoint.
+	 */
 	@Override
 	public void run() {
 		
