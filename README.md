@@ -12,4 +12,4 @@ Sample usage:
     properties.put("Gender", "Female");
     Indicative.recordEvent(context, "Registration", "user47", properties);
   
-For more details, see our documentation at: http://staging.skunkalytics.com/docs/integration.html
+For more details, see our documentation at: http://www.indicative.com/docs/integration.html
