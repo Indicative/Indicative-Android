@@ -11,7 +11,9 @@ Features:
 Sample usage:
 
     // In the onCreate() method of your Application class, call the launch() 
-    // method, passing in the application context and your project's API key
+    // method, passing in the application context and your project's API key. 
+    // You can find yours by logging in at indicative.com and navigating to
+    // the Project Settings page.
     @Override
 	public void onCreate() {
 	    Indicative.launch(getApplicationContext(), "Your-API-Key-Goes-Here");
