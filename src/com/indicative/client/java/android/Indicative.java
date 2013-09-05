@@ -86,18 +86,16 @@ public class Indicative {
 	/**
 	 * Creates an Event object and adds it to SharedPreferences.
 	 * 
-	 * @param context		The app context
 	 * @param eventName		The name of your event
 	 * @param uniqueId		A unique identifier for the user associated with the event
 	 * @param properties	A Map of property names and values
 	 */
-	public static void recordEvent(Context context,
-			String eventName, String uniqueId, Map<String, String> properties) {
+	public static void recordEvent(String eventName, String uniqueId, Map<String, String> properties) {
 		Event event = new Event(getInstance().apiKey, eventName, uniqueId,
 				properties);
 		String jsonObj = event.getEventAsJSON().toString();
 
-		addEventToSharedPrefs(context, jsonObj);
+		addEventToSharedPrefs(jsonObj);
 
 		if (debug) {
 			Log.v("Indicative",
@@ -109,11 +107,14 @@ public class Indicative {
 	/**
 	 * Adds the Event object to SharedPreferences
 	 * 
-	 * @param context		The app context
 	 * @param jsonObj		A JSON representation of the event
 	 */
-	private static synchronized void addEventToSharedPrefs(Context context, String jsonObj){
-		SharedPreferences prefs = context.getSharedPreferences(
+	private static synchronized void addEventToSharedPrefs(String jsonObj){
+		if(getInstance().context == null){
+			Log.v("Indicative", "Indicative instance has not been initialized; not recording event");
+			return;
+		}
+		SharedPreferences prefs = getInstance().context.getSharedPreferences(
 				"indicative_events", Context.MODE_PRIVATE);
 		int eventCount = prefs.getInt(jsonObj, 0);
 		prefs.edit().putInt(jsonObj, eventCount + 1).commit();
