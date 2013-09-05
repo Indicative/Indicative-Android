@@ -23,7 +23,7 @@ Sample usage:
     Map<String, String> properties = new HashMap<String, String>();
     properties.put("Age", "23");
     properties.put("Gender", "Female");
-    Indicative.recordEvent(context, "Registration", "user47", properties);
+    Indicative.recordEvent("Registration", "user47", properties);
 
 You should modify and extend this class to your heart's content.  If you make any changes please send a pull request!
 
