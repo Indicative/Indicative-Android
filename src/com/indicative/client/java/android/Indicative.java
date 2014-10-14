@@ -251,6 +251,7 @@ public class Indicative {
 				HttpPost post = new HttpPost(API_ENDPOINT);
 
 				post.setHeader("Content-Type", "application/json");
+				post.addHeader("Indicative-Client", "Android");
 
 				post.setEntity(new StringEntity(event, "UTF-8"));
 
