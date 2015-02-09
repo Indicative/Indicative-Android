@@ -1,4 +1,4 @@
-package com.example.Indogative;
+package com.example.app;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -9,7 +9,7 @@ import com.indicative.client.java.android.Indicative;
 import java.util.HashMap;
 import java.util.Map;
 
-public class IndogativeActivity extends Activity {
+public class ExampleActivity extends Activity {
     /**
      * Called when the activity is first created.
      */

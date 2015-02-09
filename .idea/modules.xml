@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/Example/Example.iml" filepath="$PROJECT_DIR$/Example/Example.iml" />
       <module fileurl="file://$PROJECT_DIR$/Indicative-Android.iml" filepath="$PROJECT_DIR$/Indicative-Android.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Indogative/Indogative.iml" filepath="$PROJECT_DIR$/Indogative/Indogative.iml" />
     </modules>
   </component>
 </project>
