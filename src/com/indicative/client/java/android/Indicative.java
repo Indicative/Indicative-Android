@@ -4,8 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -39,6 +41,10 @@ public class Indicative {
 	// How long to wait before sending each batch of events. 
 	private static final int SEND_EVENTS_TIMER_SECONDS = 60;
 
+    private static final String EVENT_PREFS = "indicative_events";
+    private static final String UNIQUE_PREFS = "indicative_unique";
+    private static final String PROPS_PREFS = "indicative_prop_cache";
+
 	private Context context;
 	private String apiKey;
 
@@ -58,22 +64,44 @@ public class Indicative {
 	}
 
 	/**
-	 * Initializes the static Indicative instance with the project's API Key.
-	 * 
+     * (Deprecated) -- use initialize(context, apiKey) instead
+     * Initializes the static Indicative instance with the project's API Key.
+	 *
 	 * @param context	The app context
 	 * @param apiKey	Your project's API Key
 	 * 
 	 * @return 	The static Indicative instance
 	 */
+    @Deprecated
 	public static Indicative launch(Context context, String apiKey) {
 		Indicative instance = getInstance();
 		instance.apiKey = apiKey;
 		instance.context = context;
+        setUUIDInUniquePrefs();
 
 		instance.scheduleEventsTimer();
 
 		return instance;
 	}
+
+    /**
+     * Initializes the static Indicative instance with the project's API Key.
+     *
+     * @param context	The app context
+     * @param apiKey	Your project's API Key
+     *
+     * @return 	The static Indicative instance
+     */
+    public static Indicative initialize(Context context, String apiKey) {
+        Indicative instance = getInstance();
+        instance.apiKey = apiKey;
+        instance.context = context;
+        setUUIDInUniquePrefs();
+
+        instance.scheduleEventsTimer();
+
+        return instance;
+    }
 
 	/**
 	 * Schedules the timer to periodically send events (once every 60 seconds by default)
@@ -84,15 +112,22 @@ public class Indicative {
 	}
 
 	/**
+     * (Deprecated) - Use buildEvent(...) instead
+     *
 	 * Creates an Event object and adds it to SharedPreferences.
-	 * 
+	 *
 	 * @param eventName		The name of your event
 	 * @param uniqueId		A unique identifier for the user associated with the event
 	 * @param properties	A Map of property names and values
 	 */
+    @Deprecated
 	public static void recordEvent(String eventName, String uniqueId, Map<String, String> properties) {
+
+        Map<String, Object> propMap = getAllPropertiesFromSharedPrefs();
+        propMap.putAll(properties);
+
 		Event event = new Event(getInstance().apiKey, eventName, uniqueId,
-				properties);
+				propMap);
 		String jsonObj = event.getEventAsJSON().toString();
 
 		addEventToSharedPrefs(jsonObj);
@@ -103,6 +138,138 @@ public class Indicative {
 							.toString());
 		}
 	}
+
+    /**
+     * Creates an Event object and adds it to SharedPreferences queue to send to Indicative input services.
+     *
+     * @param eventName		The name of your event
+     * @param uniqueId		A unique identifier for the user associated with the event
+     * @param properties	A Map of property names and values
+     */
+    public static void buildEvent(String eventName, String uniqueId, Map<String, Object> properties) {
+
+        Map<String, Object> propMap = getAllPropertiesFromSharedPrefs();
+        if (properties != null) { propMap.putAll(properties); }
+
+        if (uniqueId == null || uniqueId.isEmpty()) {
+            uniqueId = getUniqueIDFromSharedPrefs();
+        }
+
+        Event event = new Event(getInstance().apiKey, eventName, uniqueId,
+                propMap);
+        String jsonObj = event.getEventAsJSON().toString();
+
+        addEventToSharedPrefs(jsonObj);
+
+        if (debug) {
+            Log.v("Indicative",
+                    new StringBuilder("Recorded event: ").append(jsonObj)
+                            .toString());
+        }
+    }
+
+    /**
+     * Creates an Event object and adds it to SharedPreferences queue to send to Indicative input services.
+     *
+     * @param eventName		The name of your event
+     */
+    public static void buildEvent(String eventName) {
+        buildEvent(eventName, null, null);
+    }
+
+    /**
+     * Creates an Event object and adds it to SharedPreferences queue to send to Indicative input services.
+     *
+     * @param eventName		The name of your event
+     * @param uniqueId		A unique identifier for the user associated with the event
+     */
+    public static void buildEvent(String eventName, String uniqueId) {
+        buildEvent(eventName, uniqueId, null);
+    }
+
+    /**
+     * Creates an Event object and adds it to SharedPreferences queue to send to Indicative input services.
+     *
+     * @param eventName		The name of your event
+     * @param properties	A Map of property names and values
+     */
+    public static void buildEvent(String eventName, Map<String, Object> properties) {
+        buildEvent(eventName, null, properties);
+    }
+
+    /**
+     * Sets a unique ID to be used on all following events that does not explicitly set one
+     *
+     * @param uniqueID  A unique identifier for the user associated with all events
+     */
+    public static void setUniqueID(String uniqueID) {
+        setUniqueIDToSharedPrefs(uniqueID);
+    }
+
+    /**
+     * Clears the unique ID that is used on all events
+     */
+    public static void clearUniqueID() {
+        clearUniqueIDInSharedPrefs();
+    }
+
+    /**
+     * Adds a property to the common property cached list in SharedPreferences
+     *
+     * @param name      The property's unique name
+     * @param value     The property's value based on user or event
+     */
+    public static void addProperty(String name, String value) {
+        addPropertyToSharedPrefs(name, value);
+    }
+
+    /**
+     * Adds a property to the common property cached list in SharedPreferences
+     *
+     * @param name      The property's unique name
+     * @param value     The property's value based on user or event
+     */
+    public static void addProperty(String name, int value) {
+        addPropertyToSharedPrefs(name, value);
+    }
+
+    /**
+     * Adds a property to the common property cached list in SharedPreferences
+     *
+     * @param name      The property's unique name
+     * @param value     The property's value based on user or event
+     */
+    public static void addProperty(String name, boolean value) {
+        addPropertyToSharedPrefs(name, value);
+    }
+
+    /**
+     * Adds a map of common properties to the cached list in SharedPreferences
+     *
+     * @param properties
+     */
+    public static void addProperties(Map<String, String> properties) {
+        for(Map.Entry<String, String> prop : properties.entrySet()) {
+            addProperty(prop.getKey(), prop.getValue());
+        }
+    }
+
+    /**
+     * Removes a single property from the cached list of common
+     * properties in SharedPreferences
+     *
+     * @param name      The property's unique name or key to remove
+     */
+    public static void removeProperty(String name) {
+        removePropertyFromSharedPrefs(name);
+    }
+
+    /**
+     * Clears the entire list of shared common properties in SharedPreferences
+     */
+    public static void clearProperties() {
+        removePropertiesFromSharedPrefs();
+    }
 	
 	/**
 	 * Adds the Event object to SharedPreferences
@@ -115,12 +282,162 @@ public class Indicative {
 			return;
 		}
 		SharedPreferences prefs = getInstance().context.getSharedPreferences(
-				"indicative_events", Context.MODE_PRIVATE);
+				EVENT_PREFS, Context.MODE_PRIVATE);
 		int eventCount = prefs.getInt(jsonObj, 0);
 		prefs.edit().putInt(jsonObj, eventCount + 1).commit();
 	}
-	
-	/**
+
+    private static synchronized void setUUIDInUniquePrefs(){
+        if (getInstance().context == null) {
+            Log.v("Indicative", "Indicative instance has not been initialized; not setting up unique id");
+            return;
+        }
+
+        SharedPreferences prefs = getInstance().context.getSharedPreferences(UNIQUE_PREFS, Context.MODE_PRIVATE);
+        String uuid = prefs.getString("uuid", null);
+        if (uuid == null) {
+            prefs.edit().putString("uuid", UUID.randomUUID().toString());
+        }
+    }
+
+    /**
+     *  Adds the unique id to SharedPreferences
+     *
+     * @param unique    A string of a unique identifier for this user
+     */
+    private static synchronized void setUniqueIDToSharedPrefs(String unique) {
+        if (getInstance().context == null) {
+            Log.v("Indicative", "Indicative instance has not been initialized; not setting up unique id");
+            return;
+        }
+
+        SharedPreferences prefs = getInstance().context.getSharedPreferences(UNIQUE_PREFS, Context.MODE_PRIVATE);
+        prefs.edit().putString(UNIQUE_PREFS, unique).commit();
+    }
+
+    /**
+     *  Gets the unique identifier from SharedPreferences
+     */
+    private static synchronized String getUniqueIDFromSharedPrefs() {
+        if (getInstance().context == null) {
+            Log.v("Indicative", "Indicative instance has not been initialized; not setting up unique id");
+            return null;
+        }
+
+        SharedPreferences prefs = getInstance().context.getSharedPreferences(UNIQUE_PREFS, Context.MODE_PRIVATE);
+        String uniqueID = prefs.getString(UNIQUE_PREFS, null);
+
+        if (uniqueID == null || uniqueID.isEmpty()) {
+            uniqueID = prefs.getString("uuid", null);
+        }
+
+        return uniqueID;
+    }
+
+    /**
+     *  Clears the unique id cached in SharedPreferences
+     */
+    private static synchronized void clearUniqueIDInSharedPrefs() {
+        if (getInstance().context == null) {
+            Log.v("Indicative", "Indicative instance has not been initialized; not clearing unique id");
+            return;
+        }
+
+        SharedPreferences prefs = getInstance().context.getSharedPreferences(UNIQUE_PREFS, Context.MODE_PRIVATE);
+        prefs.edit().remove(UNIQUE_PREFS).commit();
+    }
+
+    /**
+     * Adds a common property to the SharedPreferences
+     *
+     * @param key		A property's key or name
+     * @param val       A property's value
+     */
+    private static synchronized void addPropertyToSharedPrefs(String key, String val) {
+        if (getInstance().context == null) {
+            Log.v("Indicative", "Indicative instance has not been initialized; not adding common prop");
+            return;
+        }
+
+        SharedPreferences prefs = getInstance().context.getSharedPreferences(PROPS_PREFS, Context.MODE_PRIVATE);
+        prefs.edit().putString(key, val).commit();
+    }
+
+    /**
+     * Adds a common property to the SharedPreferences
+     *
+     * @param key		A property's key or name
+     * @param val       A property's value
+     */
+    private static synchronized void addPropertyToSharedPrefs(String key, int val) {
+        if (getInstance().context == null) {
+            Log.v("Indicative", "Indicative instance has not been initialized; not adding common prop");
+            return;
+        }
+
+        SharedPreferences prefs = getInstance().context.getSharedPreferences(PROPS_PREFS, Context.MODE_PRIVATE);
+        prefs.edit().putInt(key, val).commit();
+    }
+
+    /**
+     * Adds a common property to the SharedPreferences
+     *
+     * @param key		A property's key or name
+     * @param val       A property's value
+     */
+    private static synchronized void addPropertyToSharedPrefs(String key, boolean val) {
+        if (getInstance().context == null) {
+            Log.v("Indicative", "Indicative instance has not been initialized; not adding common prop");
+            return;
+        }
+
+        SharedPreferences prefs = getInstance().context.getSharedPreferences(PROPS_PREFS, Context.MODE_PRIVATE);
+        prefs.edit().putBoolean(key, val).commit();
+    }
+
+    /**
+     * Removes a single property from the property cache in SharedPreferences
+     *
+     * @param key   The property's key to be removed
+     */
+    private static synchronized void removePropertyFromSharedPrefs(String key) {
+        if (getInstance().context == null) {
+            Log.v("Indicative", "Indicative instance has not been initialized; not adding common prop");
+            return;
+        }
+
+        SharedPreferences prefs = getInstance().context.getSharedPreferences(PROPS_PREFS, Context.MODE_PRIVATE);
+        prefs.edit().remove(key);
+    }
+
+    /**
+     * Clear all of the cached properties in the SharedPreferences
+     */
+    private static synchronized void removePropertiesFromSharedPrefs() {
+        if (getInstance().context == null) {
+            Log.v("Indicative", "Indicative instance has not been initialized; not adding common prop");
+            return;
+        }
+
+        SharedPreferences prefs = getInstance().context.getSharedPreferences(PROPS_PREFS, Context.MODE_PRIVATE);
+        prefs.edit().clear();
+    }
+
+    /**
+     * Gets all the cached properties in the SharedPreferences
+     */
+    private static synchronized Map<String, Object> getAllPropertiesFromSharedPrefs() {
+        if (getInstance().context == null) {
+            Log.v("Indicative", "Indicative instance has not been initialized; not getting common props");
+            return new HashMap<String, Object>();
+        }
+
+        SharedPreferences prefs = getInstance().context.getSharedPreferences(PROPS_PREFS, Context.MODE_PRIVATE);
+        return (Map<String,Object>)prefs.getAll();
+    }
+
+
+    /**
 	 * Object representing an Indicative Event
 	 */
 	public static class Event {
@@ -129,7 +446,7 @@ public class Indicative {
 		private String eventName;
 		private long eventTime;
 		private String eventUniqueId;
-		private Map<String, String> properties;
+		private Map<String, Object> properties;
 		
 		/**
 		 * Basic constructor.
@@ -139,7 +456,7 @@ public class Indicative {
 		 * @param eventUniqueId		A unique identifier for the user associated with the event
 		 * @param properties		A Map of property names and values
 		 */
-		public Event(String apiKey, String eventName, String eventUniqueId, Map<String, String> properties){
+		public Event(String apiKey, String eventName, String eventUniqueId, Map<String, Object> properties){
 			this.apiKey = apiKey;
 			this.eventName = eventName;
 			this.eventTime = System.currentTimeMillis();
@@ -160,7 +477,7 @@ public class Indicative {
 				event.put("eventUniqueId", eventUniqueId);
 				if(properties != null && !properties.isEmpty()){
 					JSONObject propsJson = new JSONObject();
-					for(Entry<String, String> entry : properties.entrySet()){
+					for(Entry<String, Object> entry : properties.entrySet()){
 						propsJson.put(entry.getKey(), entry.getValue());
 					}
 					event.put("properties", propsJson);
@@ -197,7 +514,7 @@ public class Indicative {
 				Log.v("Indicative Timer", "Running send events timer");
 			}
 			
-			Map<String, ?> events = context.getSharedPreferences("indicative_events", Context.MODE_PRIVATE).getAll();
+			Map<String, ?> events = context.getSharedPreferences(EVENT_PREFS, Context.MODE_PRIVATE).getAll();
 			
 			if(events != null && !events.isEmpty()){
 				for (String event : events.keySet()) {
@@ -285,7 +602,7 @@ public class Indicative {
 			if (result != 0 && result != 408 && result != 500) {
 
 				SharedPreferences prefs = context.getSharedPreferences(
-						"indicative_events", Context.MODE_PRIVATE);
+						EVENT_PREFS, Context.MODE_PRIVATE);
 				int eventCount = prefs.getInt(event, 0);
 				if (eventCount > 1) {
 					prefs.edit().putInt(event, eventCount - 1).commit();
