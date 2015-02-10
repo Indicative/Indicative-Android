@@ -2,6 +2,7 @@ package com.example.app;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import com.indicative.client.java.android.Indicative;
@@ -18,8 +19,7 @@ public class ExampleActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        //"43f0abdf-701e-4013-9557-ea0c146da70e" -> jackie+android@indicative.com
-        Indicative.initialize(this.getApplicationContext(), "43f0abdf-701e-4013-9557-ea0c146da70e");
+        Indicative.initialize(getApplicationContext(), "TEST-API-KEY");
 
         final Button addUniqueButton = (Button) findViewById(R.id.uniquebutton);
         addUniqueButton.setOnClickListener(new View.OnClickListener() {
@@ -45,7 +45,7 @@ public class ExampleActivity extends Activity {
         addPropStrButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Indicative.addProperty("common prop name str", "string!");
+                Indicative.addProperty("commonprop1", "string!");
             }
         });
 
@@ -54,7 +54,7 @@ public class ExampleActivity extends Activity {
         addPropIntButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Indicative.addProperty("common prop name int", 4);
+                Indicative.addProperty("commonprop2", 4);
             }
         });
 
@@ -63,7 +63,7 @@ public class ExampleActivity extends Activity {
         addPropBoolButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Indicative.addProperty("common prop name bool", true);
+                Indicative.addProperty("commonprop3", true);
             }
         });
 
@@ -85,6 +85,7 @@ public class ExampleActivity extends Activity {
         buildEventNameId.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.d("Indicative", "building event name id");
                 Indicative.buildEvent("buildnameid", "id@id.com");
             }
         });
@@ -98,6 +99,42 @@ public class ExampleActivity extends Activity {
                 props.put("prop5", 5);
                 props.put("prop6", true);
                 Indicative.buildEvent("buildnameid", props);
+            }
+        });
+
+        final Button buildEventName = (Button) findViewById(R.id.buildnamebutton);
+        buildEventName.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Indicative.buildEvent("buildname");
+            }
+        });
+
+        final Button removeProp = (Button) findViewById(R.id.removepropbutton);
+        removeProp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Indicative.removeProperty("commonprop1");
+            }
+        });
+
+        final Button removeAllProp = (Button) findViewById(R.id.removeallpropbutton);
+        removeAllProp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Indicative.clearProperties();
+            }
+        });
+
+        final Button addAllProps = (Button) findViewById(R.id.addallpropbutton);
+        addAllProps.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Map<String, Object> map = new HashMap<String, Object>();
+                map.put("commonprop1", "override");
+                map.put("commonprop4", 43);
+                map.put("commonprop5", "another");
+                Indicative.addProperties(map);
             }
         });
     }

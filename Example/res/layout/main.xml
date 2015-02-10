@@ -54,5 +54,23 @@
             android:layout_height="wrap_content"
             android:text="Build Event (name)"
             android:id="@+id/buildnamebutton" android:layout_gravity="left|center_vertical"/>
+
+    <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Remove prop"
+            android:id="@+id/removepropbutton" android:layout_gravity="left|center_vertical"/>
+
+    <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Remove all props"
+            android:id="@+id/removeallpropbutton" android:layout_gravity="left|center_vertical"/>
+
+    <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add list of common props"
+            android:id="@+id/addallpropbutton" android:layout_gravity="left|center_vertical"/>
 </LinearLayout>
 

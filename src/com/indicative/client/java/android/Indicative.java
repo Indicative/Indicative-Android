@@ -36,7 +36,7 @@ public class Indicative {
 	private static Indicative instance;
 	
 	// Enable this to see some basic logging.
-	private static final boolean debug = false;
+	private static final boolean debug = true;
 	
 	// How long to wait before sending each batch of events. 
 	private static final int SEND_EVENTS_TIMER_SECONDS = 60;
@@ -248,9 +248,16 @@ public class Indicative {
      *
      * @param properties
      */
-    public static void addProperties(Map<String, String> properties) {
-        for(Map.Entry<String, String> prop : properties.entrySet()) {
-            addProperty(prop.getKey(), prop.getValue());
+    public static void addProperties(Map<String, Object> properties) {
+        for(Map.Entry<String, Object> prop : properties.entrySet()) {
+            if (prop.getValue() instanceof Boolean) {
+                addProperty(prop.getKey(), (Boolean) prop.getValue());
+            } else if (prop.getValue() instanceof String) {
+                addProperty(prop.getKey(), (String) prop.getValue());
+            } else if (prop.getValue() instanceof Integer) {
+                addProperty(prop.getKey(), (Integer) prop.getValue());
+            }
+
         }
     }
 
@@ -296,7 +303,8 @@ public class Indicative {
         SharedPreferences prefs = getInstance().context.getSharedPreferences(UNIQUE_PREFS, Context.MODE_PRIVATE);
         String uuid = prefs.getString("uuid", null);
         if (uuid == null) {
-            prefs.edit().putString("uuid", UUID.randomUUID().toString());
+            uuid = UUID.randomUUID().toString();
+            prefs.edit().putString("uuid", uuid).commit();
         }
     }
 
@@ -407,7 +415,7 @@ public class Indicative {
         }
 
         SharedPreferences prefs = getInstance().context.getSharedPreferences(PROPS_PREFS, Context.MODE_PRIVATE);
-        prefs.edit().remove(key);
+        prefs.edit().remove(key).commit();
     }
 
     /**
@@ -420,7 +428,7 @@ public class Indicative {
         }
 
         SharedPreferences prefs = getInstance().context.getSharedPreferences(PROPS_PREFS, Context.MODE_PRIVATE);
-        prefs.edit().clear();
+        prefs.edit().clear().commit();
     }
 
     /**
