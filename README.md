@@ -27,7 +27,9 @@ Sample usage:
 
 
 We've added <b>common properties</b> and cached <b>unique identifiers</b>!
+
 A <b>common property</b> is a property that gets recorded for all events. Common properties are stored in SharedPreferences and appended to each event's properties when the event is recorded.
+
 You can also set a <b>unique identifier</b> to be recorded for all events. This value will be stored in SharedPreferences as well, and will be set for all events that don't otherwise have a unique identifier specified.  If you haven't set a unique identifier, Indicative will generate a UUID during initialization and and treat that UUID as the default unique identifier for all events. To set a different unique identifier for a specific event, simply call the `buildEvent()` method and pass in a different `uniqueId` value.
 
 Our API -- all are static methods:
