@@ -42,7 +42,7 @@ Our API -- all are static methods:
 
     <tr>
         <td> initialize(Context context, String apiKey)</td>
-        <td> Initializes the static Indicative instance with the project's API Key, using the application context.  It'll generate and store a UUID unique identifier if one isn't already stored.</td>
+        <td> Initializes the static Indicative instance with the project's API Key, using the application context.  This method will generate and store a UUID unique identifier if one isn't already stored.</td>
     </tr>
 
     <tr>
