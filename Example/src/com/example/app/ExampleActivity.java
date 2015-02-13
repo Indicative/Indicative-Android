@@ -19,7 +19,7 @@ public class ExampleActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        Indicative.initialize(getApplicationContext(), "TEST-API-KEY");
+        Indicative.launch(getApplicationContext(), "TEST-API-KEY");
 
         final Button addUniqueButton = (Button) findViewById(R.id.uniquebutton);
         addUniqueButton.setOnClickListener(new View.OnClickListener() {
@@ -68,15 +68,15 @@ public class ExampleActivity extends Activity {
         });
 
 
-        final Button buildEventALL = (Button) findViewById(R.id.buildnameidpropsbutton);
-        buildEventALL.setOnClickListener(new View.OnClickListener() {
+        final Button recordEventALL = (Button) findViewById(R.id.buildnameidpropsbutton);
+        recordEventALL.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Map<String, Object> props = new HashMap<String, Object>();
                 props.put("prop1", "propstr");
                 props.put("prop2", 5);
                 props.put("prop3", true);
-                Indicative.buildEvent("buildall", "unique@unique.com", props);
+                Indicative.recordEvent("recordall", "unique@unique.com", props);
             }
         });
 
@@ -85,8 +85,8 @@ public class ExampleActivity extends Activity {
         buildEventNameId.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d("Indicative", "building event name id");
-                Indicative.buildEvent("buildnameid", "id@id.com");
+                Log.d("Indicative", "recording event name id");
+                Indicative.recordEvent("recordnameid", "id@id.com");
             }
         });
 
@@ -98,7 +98,7 @@ public class ExampleActivity extends Activity {
                 props.put("prop4", "propstr");
                 props.put("prop5", 5);
                 props.put("prop6", true);
-                Indicative.buildEvent("buildnameid", props);
+                Indicative.recordEvent("recordnameid", props);
             }
         });
 
@@ -106,7 +106,7 @@ public class ExampleActivity extends Activity {
         buildEventName.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Indicative.buildEvent("buildname");
+                Indicative.recordEvent("recordname");
             }
         });
 

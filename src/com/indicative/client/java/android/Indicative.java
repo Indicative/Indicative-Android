@@ -63,27 +63,6 @@ public class Indicative {
 		return instance;
 	}
 
-	/**
-     * (Deprecated) -- use initialize(context, apiKey) instead
-     * Initializes the static Indicative instance with the project's API Key.
-	 *
-	 * @param context	The app context
-	 * @param apiKey	Your project's API Key
-	 * 
-	 * @return 	The static Indicative instance
-	 */
-    @Deprecated
-	public static Indicative launch(Context context, String apiKey) {
-		Indicative instance = getInstance();
-		instance.apiKey = apiKey;
-		instance.context = context;
-        setUUIDInUniquePrefs();
-
-		instance.scheduleEventsTimer();
-
-		return instance;
-	}
-
     /**
      * Initializes the static Indicative instance with the project's API Key.
      *
@@ -92,7 +71,7 @@ public class Indicative {
      *
      * @return 	The static Indicative instance
      */
-    public static Indicative initialize(Context context, String apiKey) {
+    public static Indicative launch(Context context, String apiKey) {
         Indicative instance = getInstance();
         instance.apiKey = apiKey;
         instance.context = context;
@@ -111,34 +90,6 @@ public class Indicative {
 		handler.post(new SendEventsTimerThread(context, handler));
 	}
 
-	/**
-     * (Deprecated) - Use buildEvent(...) instead
-     *
-	 * Creates an Event object and adds it to SharedPreferences.
-	 *
-	 * @param eventName		The name of your event
-	 * @param uniqueId		A unique identifier for the user associated with the event
-	 * @param properties	A Map of property names and values
-	 */
-    @Deprecated
-	public static void recordEvent(String eventName, String uniqueId, Map<String, String> properties) {
-
-        Map<String, Object> propMap = getAllPropertiesFromSharedPrefs();
-        propMap.putAll(properties);
-
-		Event event = new Event(getInstance().apiKey, eventName, uniqueId,
-				propMap);
-		String jsonObj = event.getEventAsJSON().toString();
-
-		addEventToSharedPrefs(jsonObj);
-
-		if (debug) {
-			Log.v("Indicative",
-					new StringBuilder("Recorded event: ").append(jsonObj)
-							.toString());
-		}
-	}
-
     /**
      * Creates an Event object and adds it to SharedPreferences queue to send to Indicative input services.
      *
@@ -146,7 +97,7 @@ public class Indicative {
      * @param uniqueId		A unique identifier for the user associated with the event
      * @param properties	A Map of property names and values
      */
-    public static void buildEvent(String eventName, String uniqueId, Map<String, Object> properties) {
+    public static void recordEvent(String eventName, String uniqueId, Map<String, Object> properties) {
 
         Map<String, Object> propMap = getAllPropertiesFromSharedPrefs();
         if (properties != null) { propMap.putAll(properties); }
@@ -173,8 +124,8 @@ public class Indicative {
      *
      * @param eventName		The name of your event
      */
-    public static void buildEvent(String eventName) {
-        buildEvent(eventName, null, null);
+    public static void recordEvent(String eventName) {
+    	recordEvent(eventName, null, null);
     }
 
     /**
@@ -183,8 +134,8 @@ public class Indicative {
      * @param eventName		The name of your event
      * @param uniqueId		A unique identifier for the user associated with the event
      */
-    public static void buildEvent(String eventName, String uniqueId) {
-        buildEvent(eventName, uniqueId, null);
+    public static void recordEvent(String eventName, String uniqueId) {
+    	recordEvent(eventName, uniqueId, null);
     }
 
     /**
@@ -193,8 +144,8 @@ public class Indicative {
      * @param eventName		The name of your event
      * @param properties	A Map of property names and values
      */
-    public static void buildEvent(String eventName, Map<String, Object> properties) {
-        buildEvent(eventName, null, properties);
+    public static void recordEvent(String eventName, Map<String, Object> properties) {
+    	recordEvent(eventName, null, properties);
     }
 
     /**
