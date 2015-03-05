@@ -36,7 +36,7 @@ public class Indicative {
 	private static Indicative instance;
 	
 	// Enable this to see some basic logging.
-	private static final boolean debug = true;
+	private static final boolean debug = false;
 	
 	// How long to wait before sending each batch of events. 
 	private static final int SEND_EVENTS_TIMER_SECONDS = 60;
@@ -442,7 +442,7 @@ public class Indicative {
 					event.put("properties", propsJson);
 				}
 			} catch (JSONException e) {
-				Log.v("Indicative Event", e.getMessage(), e.fillInStackTrace());
+				Log.v("Indicative", "Event" + e.getMessage(), e.fillInStackTrace());
 			}
 			
 			return event;
@@ -470,7 +470,7 @@ public class Indicative {
 		public void run() {
 			
 			if(debug){
-				Log.v("Indicative Timer", "Running send events timer");
+				Log.v("Indicative", "Timer: Running send events timer");
 			}
 			
 			Map<String, ?> events = context.getSharedPreferences(EVENT_PREFS, Context.MODE_PRIVATE).getAll();
@@ -513,7 +513,7 @@ public class Indicative {
 		@Override
 		protected Integer doInBackground(Void... params) {
 			if (debug) {
-				Log.v("Indicative Async Task", new StringBuilder("Sending event: ")
+				Log.v("Indicative", new StringBuilder("Async Task: Sending event: ")
 						.append(event).toString());
 			}
 
@@ -536,16 +536,14 @@ public class Indicative {
 				statusCode = resp.getStatusLine().getStatusCode();
 
 				if (debug) {
-					Log.v("Indicative Status Code: ", Integer.toString(statusCode));
-					Log.v("Indicative Status Reason: ", resp.getStatusLine()
-							.getReasonPhrase());
-					Log.d("Indicative Response Body: ", inputStreamToString(resp
-							.getEntity().getContent()));
+					Log.v("Indicative", new StringBuilder("Status Code: ").append(Integer.toString(statusCode)).toString());
+					Log.v("Indicative", new StringBuilder("Status Reason: ").append(resp.getStatusLine().getReasonPhrase()).toString());
+					Log.d("Indicative", new StringBuilder("Response Body: ").append(inputStreamToString(resp.getEntity().getContent())).toString());
 				}
 
 				return statusCode;
 			} catch (Exception e) {
-				Log.v("Error in Indicative Async Task: ", e.getMessage(), e);
+				Log.v("Indicative", new StringBuilder("AsyncTask: ").append(e.getMessage()).toString(), e);
 			}
 
 			return 400;
@@ -570,7 +568,7 @@ public class Indicative {
 				}
 
 			} else if (debug) {
-				Log.v("Indicative Async Task: ", "Retriable error occured");
+				Log.v("Indicative", " Async Task: Retriable error occured");
 			}
 		}
 
@@ -592,7 +590,7 @@ public class Indicative {
 					total.append(line);
 				}
 			} catch (IOException e) {
-				Log.v("Indicative Async Task", e.getMessage(), e);
+				Log.v("Indicative", new StringBuilder(" Async Task: ").append(e.getMessage()).toString(), e);
 			}
 
 			return total.toString();
