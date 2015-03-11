@@ -507,11 +507,45 @@ public class Indicative {
 			return event;
 		}
 	}
+
+    /**
+     *  Clear the cached events by sending them all now using the ASYNC task.
+     */
+    public static void sendAllEvents() {
+        getInstance().sendAllEvents(getInstance().context);
+    }
+
+
+    /**
+     *  Clear the cached events by sending them all now using the ASYNC task.
+     *
+     *  @param context  instance context
+     */
+    public synchronized void sendAllEvents(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(EVENT_PREFS, Context.MODE_PRIVATE);
+        Map<String, ?> events = prefs.getAll();
+
+        if(events != null && !events.isEmpty()){
+            for (String event : events.keySet()) {
+                for(int i = 0 ; i < (Integer)events.get(event) ; i++) {
+                    new SendEventAsyncTask(context, event).execute();
+
+                    //remove from preferences
+                    int eventCount = prefs.getInt(event, 0);
+                    if (eventCount > 1) {
+                        prefs.edit().putInt(event, eventCount - 1).commit();
+                    } else {
+                        prefs.edit().remove(event).commit();
+                    }
+                }
+            }
+        }
+    }
+
 	
 	/**
 	 * Scheduled timer to periodically send Events to the Indicative API endpoint.
 	 */
-
 	public class SendEventsTimerThread extends Thread {
 		private Context context;
 		private Handler handler;
@@ -531,19 +565,10 @@ public class Indicative {
 			if(debug){
 				Log.v("Indicative", "Timer: Running send events timer");
 			}
-			
-			Map<String, ?> events = context.getSharedPreferences(EVENT_PREFS, Context.MODE_PRIVATE).getAll();
-			
-			if(events != null && !events.isEmpty()){
-				for (String event : events.keySet()) {
-					for(int i = 0 ; i < (Integer)events.get(event) ; i++) {
-						new SendEventAsyncTask(context, event).execute();
-					}
-				}
-			}
-			
-			handler.postDelayed(this, SEND_EVENTS_TIMER_SECONDS * 1000l);
-		}
+
+            sendAllEvents(context);
+            handler.postDelayed(this, SEND_EVENTS_TIMER_SECONDS * 1000l);
+        }
 	}
 	
 	/**
@@ -615,20 +640,18 @@ public class Indicative {
 		@Override
 		protected void onPostExecute(Integer result) {
 
-			if (result != 0 && result != 408 && result != 500) {
-
-				SharedPreferences prefs = context.getSharedPreferences(
-						EVENT_PREFS, Context.MODE_PRIVATE);
-				int eventCount = prefs.getInt(event, 0);
-				if (eventCount > 1) {
-					prefs.edit().putInt(event, eventCount - 1).commit();
-				} else {
-					prefs.edit().remove(event).commit();
-				}
-
-			} else if (debug) {
-				Log.v("Indicative", " Async Task: Retriable error occured");
-			}
+            if (result != 0 && result != 408 && result != 500) {
+                //do nothing, already removed in sendAllEvents
+                if (debug) {
+                    Log.v("Indicative", new StringBuilder("Async Task: event successful ").append(event).toString());
+                }
+			} else {
+                //add it back into shared prefs if that's the case
+                addEventToSharedPrefs(event);
+                if (debug) {
+                    Log.v("Indicative", " Async Task: Retriable error occured");
+                }
+            }
 		}
 
 		/**
