@@ -91,13 +91,23 @@ public class Indicative {
 	}
 
     /**
+     * Sends specific event now (doesn't queue and wait for thread)
+     */
+    private void sendEventNow(String event) {
+        if (event != null && !event.isEmpty()) {
+            new SendEventAsyncTask(getInstance().context, event).execute();
+        }
+    }
+
+    /**
      * Creates an Event object and adds it to SharedPreferences queue to send to Indicative input services.
      *
      * @param eventName		The name of your event
      * @param uniqueId		A unique identifier for the user associated with the event
      * @param properties	A Map of property names and values
+     * @param forceUpload   A flag when set to true, doesn't queue the event but pushes it right away
      */
-    public static void recordEvent(String eventName, String uniqueId, Map<String, Object> properties) {
+    public static void recordEvent(String eventName, String uniqueId, Map<String, Object> properties, boolean forceUpload) {
 
         Map<String, Object> propMap = getAllPropertiesFromSharedPrefs();
         if (properties != null) { propMap.putAll(properties); }
@@ -110,7 +120,12 @@ public class Indicative {
                 propMap);
         String jsonObj = event.getEventAsJSON().toString();
 
-        addEventToSharedPrefs(jsonObj);
+        if (forceUpload) {
+            getInstance().sendEventNow(jsonObj);
+        } else {
+            addEventToSharedPrefs(jsonObj);
+
+        }
 
         if (debug) {
             Log.v("Indicative",
@@ -123,9 +138,31 @@ public class Indicative {
      * Creates an Event object and adds it to SharedPreferences queue to send to Indicative input services.
      *
      * @param eventName		The name of your event
+     * @param uniqueId		A unique identifier for the user associated with the event
+     * @param properties	A Map of property names and values
+     */
+    public static void recordEvent(String eventName, String uniqueId, Map<String, Object> properties) {
+        recordEvent(eventName, uniqueId, properties, false);
+    }
+
+
+    /**
+     * Creates an Event object and adds it to SharedPreferences queue to send to Indicative input services.
+     *
+     * @param eventName		The name of your event
      */
     public static void recordEvent(String eventName) {
     	recordEvent(eventName, null, null);
+    }
+
+    /**
+     * Creates an Event object and adds it to SharedPreferences queue to send to Indicative input services.
+     *
+     * @param eventName		The name of your event
+     * @param forceUpload   A flag when set to true, doesn't queue the event but pushes it right away
+     */
+    public static void recordEvent(String eventName, boolean forceUpload) {
+        recordEvent(eventName, null, null, forceUpload);
     }
 
     /**
@@ -142,10 +179,32 @@ public class Indicative {
      * Creates an Event object and adds it to SharedPreferences queue to send to Indicative input services.
      *
      * @param eventName		The name of your event
+     * @param uniqueId		A unique identifier for the user associated with the event
+     * @param forceUpload   A flag when set to true, doesn't queue the event but pushes it right away
+     */
+    public static void recordEvent(String eventName, String uniqueId, boolean forceUpload) {
+        recordEvent(eventName, uniqueId, null, forceUpload);
+    }
+
+    /**
+     * Creates an Event object and adds it to SharedPreferences queue to send to Indicative input services.
+     *
+     * @param eventName		The name of your event
      * @param properties	A Map of property names and values
      */
     public static void recordEvent(String eventName, Map<String, Object> properties) {
     	recordEvent(eventName, null, properties);
+    }
+
+    /**
+     * Creates an Event object and adds it to SharedPreferences queue to send to Indicative input services.
+     *
+     * @param eventName		The name of your event
+     * @param properties	A Map of property names and values
+     * @param forceUpload   A flag when set to true, doesn't queue the event but pushes it right away
+     */
+    public static void recordEvent(String eventName, Map<String, Object> properties, boolean forceUpload) {
+        recordEvent(eventName, null, properties, forceUpload);
     }
 
     /**

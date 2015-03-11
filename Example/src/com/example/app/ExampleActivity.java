@@ -19,7 +19,7 @@ public class ExampleActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        Indicative.launch(getApplicationContext(), "TEST-API-KEY");
+        Indicative.launch(getApplicationContext(), "8d8fa5d5-1f89-4db4-bc65-04e13f91bcd1");
 
         final Button addUniqueButton = (Button) findViewById(R.id.uniquebutton);
         addUniqueButton.setOnClickListener(new View.OnClickListener() {
@@ -76,7 +76,7 @@ public class ExampleActivity extends Activity {
                 props.put("prop1", "propstr");
                 props.put("prop2", 5);
                 props.put("prop3", true);
-                Indicative.recordEvent("recordall", "unique@unique.com", props);
+                Indicative.recordEvent("recordall", "unique@unique.com", props, true);
             }
         });
 
