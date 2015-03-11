@@ -19,14 +19,14 @@ public class ExampleActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        Indicative.launch(getApplicationContext(), "8d8fa5d5-1f89-4db4-bc65-04e13f91bcd1");
+        Indicative.launch(getApplicationContext(), "YOUR-API-KEY");
 
         final Button addUniqueButton = (Button) findViewById(R.id.uniquebutton);
         addUniqueButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View view) {
-                Indicative.setUniqueID("jackie@indicative.com");
+                Indicative.setUniqueID("unique@indicative.com");
             }
         });
 
