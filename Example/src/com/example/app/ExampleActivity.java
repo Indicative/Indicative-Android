@@ -137,5 +137,13 @@ public class ExampleActivity extends Activity {
                 Indicative.addProperties(map);
             }
         });
+
+        final Button sendAllEvents = (Button) findViewById(R.id.sendallbutton);
+        sendAllEvents.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Indicative.sendAllEvents();
+            }
+        });
     }
 }
