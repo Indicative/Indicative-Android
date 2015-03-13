@@ -1,4 +1,4 @@
-package com.indicative.client.java.android;
+package com.indicative.client.android;
 
 import java.io.BufferedReader;
 import java.io.IOException;

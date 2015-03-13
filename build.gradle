@@ -1,0 +1,82 @@
+apply plugin: 'android-library'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.0.0'
+    }
+}
+
+android {
+    compileSdkVersion 22
+    buildToolsVersion "22"
+}
+
+version = "1.0.1"
+group = "com.indicative.client.android"
+
+def isSnapshot() {
+    return version.endsWith("SNAPSHOT");
+}
+
+if (!isSnapshot()) {
+	signing {
+    	required { gradle.taskGraph.hasTask("uploadArchives") }
+    	sign configurations.archives
+	}
+}
+
+uploadArchives {
+    configuration = configurations.archives
+    repositories.mavenDeployer {
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+      
+      	if (isSnapshot()) {
+      		repository(url:'file://' + new File(System.getProperty('user.home'), '.m2/repository').absolutePath)
+      	} else {
+        	repository(url: sonatypeRepo) {
+        		authentication(userName: sonatypeUsername, password: sonatypePassword)
+        	}
+        }
+        
+        pom.project {
+            name 'Indicative-Android'
+            packaging 'aar'
+            description 'Android client for Indicative\'s REST API'
+            url 'https://github.com/Indicative/Indicative-Android'
+
+            scm {
+                url 'https://github.com/Indicative/Indicative-Android'
+                connection 'scm:git:git://github.com/Indicative/Indicative-Android.git'
+                developerConnection 'scm:git:https://bealeindicative@github.com/Indicative/Indicative-Android.git'
+            }
+
+            licenses {
+                license {
+                    name 'Simplified BSD License'
+                    url 'https://github.com/Indicative/Indicative-Android/blob/master/LICENSE.txt'
+                    distribution 'repo'
+                    comments '2-clause BSD License, aka the FreeBSD License. See LICENSE.txt'
+                }
+            }
+
+            developers {
+                developer {
+                    id 'andrewbeale'
+                    name 'Andrew Beale'
+                    email 'andrew.beale@indicative.com'
+                }
+                developer {
+                    id 'jackiebenowitz'
+                    name 'Jackie Benowitz'
+                    email 'jackie@indicative.com'
+                }
+            }
+        }
+    }
+}
