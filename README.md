@@ -10,6 +10,17 @@ Features:
 
 Sample usage:
 
+    // Our Android library is available on Maven Central as an AAR artifact.
+    // If your project uses Gradle, you can integrate by adding the following dependency:
+    
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        compile 'com.indicative.client.android:Indicative-Android:1.0.1'
+    }
+
     // In the onCreate() method of your Application class, call the launch()
     // method, passing in the application context and your project's API key. 
     // You can find yours by logging in at indicative.com and navigating to
