@@ -1,13 +1,10 @@
 package com.indicative.client.android;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.UUID;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
+import android.os.Handler;
+import android.util.Log;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -20,11 +17,14 @@ import org.apache.http.params.HttpParams;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.os.AsyncTask;
-import android.os.Handler;
-import android.util.Log;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.UUID;
 
 /**
  * Standalone client for Indicative's REST API.  Events are stored in SharedPreferences, 
@@ -47,6 +47,10 @@ public class Indicative {
 
 	private Context context;
 	private String apiKey;
+
+    private SharedPreferences eventPrefs;
+    private SharedPreferences uniquePrefs;
+    private SharedPreferences propsPrefs;
 
 	private Indicative() {
 	}
@@ -75,6 +79,16 @@ public class Indicative {
         Indicative instance = getInstance();
         instance.apiKey = apiKey;
         instance.context = context;
+
+        instance.eventPrefs = context.getSharedPreferences(
+                EVENT_PREFS, Context.MODE_PRIVATE);
+
+        instance.uniquePrefs = context.getSharedPreferences(
+                UNIQUE_PREFS, Context.MODE_PRIVATE);
+
+        instance.propsPrefs = context.getSharedPreferences(
+                PROPS_PREFS, Context.MODE_PRIVATE);
+
         setUUIDInUniquePrefs();
 
         instance.scheduleEventsTimer();
@@ -298,10 +312,9 @@ public class Indicative {
 			Log.v("Indicative", "Indicative instance has not been initialized; not recording event");
 			return;
 		}
-		SharedPreferences prefs = getInstance().context.getSharedPreferences(
-				EVENT_PREFS, Context.MODE_PRIVATE);
+		SharedPreferences prefs = getInstance().eventPrefs;
 		int eventCount = prefs.getInt(jsonObj, 0);
-		prefs.edit().putInt(jsonObj, eventCount + 1).commit();
+		prefs.edit().putInt(jsonObj, eventCount + 1).apply();
 	}
 
     private static synchronized void setUUIDInUniquePrefs(){
@@ -310,11 +323,11 @@ public class Indicative {
             return;
         }
 
-        SharedPreferences prefs = getInstance().context.getSharedPreferences(UNIQUE_PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = getInstance().uniquePrefs;
         String uuid = prefs.getString("uuid", null);
         if (uuid == null) {
             uuid = UUID.randomUUID().toString();
-            prefs.edit().putString("uuid", uuid).commit();
+            prefs.edit().putString("uuid", uuid).apply();
         }
     }
 
@@ -329,8 +342,8 @@ public class Indicative {
             return;
         }
 
-        SharedPreferences prefs = getInstance().context.getSharedPreferences(UNIQUE_PREFS, Context.MODE_PRIVATE);
-        prefs.edit().putString(UNIQUE_PREFS, unique).commit();
+        SharedPreferences prefs = getInstance().uniquePrefs;
+        prefs.edit().putString(UNIQUE_PREFS, unique).apply();
     }
 
     /**
@@ -342,7 +355,7 @@ public class Indicative {
             return null;
         }
 
-        SharedPreferences prefs = getInstance().context.getSharedPreferences(UNIQUE_PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = getInstance().uniquePrefs;
         String uniqueID = prefs.getString(UNIQUE_PREFS, null);
 
         if (uniqueID == null || uniqueID.isEmpty()) {
@@ -361,8 +374,8 @@ public class Indicative {
             return;
         }
 
-        SharedPreferences prefs = getInstance().context.getSharedPreferences(UNIQUE_PREFS, Context.MODE_PRIVATE);
-        prefs.edit().remove(UNIQUE_PREFS).commit();
+        SharedPreferences prefs = getInstance().uniquePrefs;
+        prefs.edit().remove(UNIQUE_PREFS).apply();
     }
 
     /**
@@ -377,8 +390,8 @@ public class Indicative {
             return;
         }
 
-        SharedPreferences prefs = getInstance().context.getSharedPreferences(PROPS_PREFS, Context.MODE_PRIVATE);
-        prefs.edit().putString(key, val).commit();
+        SharedPreferences prefs = getInstance().propsPrefs;
+        prefs.edit().putString(key, val).apply();
     }
 
     /**
@@ -393,8 +406,8 @@ public class Indicative {
             return;
         }
 
-        SharedPreferences prefs = getInstance().context.getSharedPreferences(PROPS_PREFS, Context.MODE_PRIVATE);
-        prefs.edit().putInt(key, val).commit();
+        SharedPreferences prefs = getInstance().propsPrefs;
+        prefs.edit().putInt(key, val).apply();
     }
 
     /**
@@ -409,8 +422,8 @@ public class Indicative {
             return;
         }
 
-        SharedPreferences prefs = getInstance().context.getSharedPreferences(PROPS_PREFS, Context.MODE_PRIVATE);
-        prefs.edit().putBoolean(key, val).commit();
+        SharedPreferences prefs = getInstance().propsPrefs;
+        prefs.edit().putBoolean(key, val).apply();
     }
 
     /**
@@ -424,8 +437,8 @@ public class Indicative {
             return;
         }
 
-        SharedPreferences prefs = getInstance().context.getSharedPreferences(PROPS_PREFS, Context.MODE_PRIVATE);
-        prefs.edit().remove(key).commit();
+        SharedPreferences prefs = getInstance().propsPrefs;
+        prefs.edit().remove(key).apply();
     }
 
     /**
@@ -437,8 +450,8 @@ public class Indicative {
             return;
         }
 
-        SharedPreferences prefs = getInstance().context.getSharedPreferences(PROPS_PREFS, Context.MODE_PRIVATE);
-        prefs.edit().clear().commit();
+        SharedPreferences prefs = getInstance().propsPrefs;
+        prefs.edit().clear().apply();
     }
 
     /**
@@ -450,7 +463,7 @@ public class Indicative {
             return new HashMap<String, Object>();
         }
 
-        SharedPreferences prefs = getInstance().context.getSharedPreferences(PROPS_PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = getInstance().propsPrefs;
         return (Map<String,Object>)prefs.getAll();
     }
 
@@ -522,7 +535,7 @@ public class Indicative {
      *  @param context  instance context
      */
     public synchronized void sendAllEvents(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(EVENT_PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = eventPrefs;
         Map<String, ?> events = prefs.getAll();
 
         if(events != null && !events.isEmpty()){
@@ -533,9 +546,9 @@ public class Indicative {
                     //remove from preferences
                     int eventCount = prefs.getInt(event, 0);
                     if (eventCount > 1) {
-                        prefs.edit().putInt(event, eventCount - 1).commit();
+                        prefs.edit().putInt(event, eventCount - 1).apply();
                     } else {
-                        prefs.edit().remove(event).commit();
+                        prefs.edit().remove(event).apply();
                     }
                 }
             }
