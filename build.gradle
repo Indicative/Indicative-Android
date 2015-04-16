@@ -17,7 +17,7 @@ android {
     buildToolsVersion "22"
 }
 
-version = "1.0.1"
+version = "1.0.2"
 group = "com.indicative.client.android"
 
 def isSnapshot() {
