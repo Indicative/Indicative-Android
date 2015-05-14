@@ -330,7 +330,20 @@ public class Indicative {
             prefs.edit().putString("uuid", uuid).apply();
         }
     }
+    
+    /**
+     *  Returns the generated UUID used as a default unique ID when no ID has otherwise been set
+     */
+    public static String getDefaultUniqueID() {
+        if (getInstance().context == null) {
+            Log.v("Indicative", "Indicative instance has not been initialized; not returning anonymous ID");
+            return null;
+        }
 
+        SharedPreferences prefs = getInstance().uniquePrefs;
+        return prefs.getString("uuid", null);
+    }
+    
     /**
      *  Adds the unique id to SharedPreferences
      *
