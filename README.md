@@ -122,6 +122,6 @@ You should modify and extend this class to your heart's content.  If you make an
 
 As a best practice, consider adding a method that takes as a parameter the object representing your user, and adds certain default properties based on that user's characteristics (e.g., gender, age, etc.).
 
-For more details, see our documentation at: http://www.indicative.com/docs/integration.html
+For more details, see our documentation at: http://app.indicative.com/docs/integration.html
 
 
