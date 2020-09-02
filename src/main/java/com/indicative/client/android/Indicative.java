@@ -6,21 +6,16 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -630,25 +625,36 @@ public class Indicative {
 			int statusCode = 0;
 
 			try {
-				HttpParams httpParameters = new BasicHttpParams();
-				HttpConnectionParams.setSocketBufferSize(httpParameters, 8192);
+                HttpURLConnection con = null;
+                DataOutputStream wr = null;
+                boolean successful = false;
 
-				HttpClient client = new DefaultHttpClient(httpParameters);
-				HttpPost post = new HttpPost(API_ENDPOINT);
+                byte[] bodyBytes = event.getBytes("UTF-8");
 
-				post.setHeader("Content-Type", "application/json");
-				post.addHeader("Indicative-Client", "Android");
+                URL url = new URL(API_ENDPOINT);
+                con = (HttpURLConnection) url.openConnection();
+                con.setRequestMethod("POST");
+                con.setRequestProperty("Accept-Charset", "UTF-8");
+                con.addRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                con.setRequestProperty("Content-Length", "" + Integer.toString(bodyBytes.length));
+                con.addRequestProperty("Indicative-Client", "Android");
 
-				post.setEntity(new StringEntity(event, "UTF-8"));
+                // Send post request
+                con.setDoOutput(true);
+                con.setDoInput(true);
+                con.setInstanceFollowRedirects(false);
+                con.setUseCaches(false);
 
-				HttpResponse resp = client.execute(post);
+                wr = new DataOutputStream(con.getOutputStream());
+                wr.write(bodyBytes);
+                wr.flush();
+                wr.close();
 
-				statusCode = resp.getStatusLine().getStatusCode();
+				statusCode = con.getResponseCode();
 
 				if (debug) {
 					Log.v("Indicative", new StringBuilder("Status Code: ").append(Integer.toString(statusCode)).toString());
-					Log.v("Indicative", new StringBuilder("Status Reason: ").append(resp.getStatusLine().getReasonPhrase()).toString());
-					Log.d("Indicative", new StringBuilder("Response Body: ").append(inputStreamToString(resp.getEntity().getContent())).toString());
+					Log.d("Indicative", new StringBuilder("Response Body: ").append(inputStreamToString(con.getInputStream())).toString());
 				}
 
 				return statusCode;

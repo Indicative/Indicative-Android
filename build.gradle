@@ -1,27 +1,36 @@
-apply plugin: 'android-library'
+apply plugin: 'com.android.library'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
 buildscript {
     repositories {
-        mavenCentral()
+        google()
+        jcenter()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.0.0'
+        classpath 'com.android.tools.build:gradle:4.0.1'
     }
 }
 
-android {
-    compileSdkVersion 22
-    buildToolsVersion "22"
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
 }
 
-version = "1.0.3"
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion '30.0.2'
+}
+
+version = "1.0.4-SNAPSHOT"
 group = "com.indicative.client.android"
 
 def isSnapshot() {
-    return version.endsWith("SNAPSHOT");
+    return version.endsWith("SNAPSHOT")
 }
 
 if (!isSnapshot()) {
