@@ -20,7 +20,7 @@ Sample usage:
     }
 
     dependencies {
-        compile 'com.indicative.client.android:Indicative-Android:1.0.1'
+        compile 'com.indicative.client.android:Indicative-Android:1.10.0'
     }
 
     // In the onCreate() method of your Application class, call the launch()
@@ -116,6 +116,11 @@ Our API -- all are static methods:
     <tr>
         <td> clearProperties() </td>
         <td> Removes all common properties from storage. </td>
+    </tr>
+
+    <tr>
+        <td> reset() </td>
+        <td> Removes all state from the Indicative SDK and regenerates the anonymous ID. This should be called in your application on logout. </td>
     </tr>
 
 </table>
