@@ -6,21 +6,16 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -130,15 +125,13 @@ public class Indicative {
             uniqueId = getUniqueIDFromSharedPrefs();
         }
 
-        Event event = new Event(getInstance().apiKey, eventName, uniqueId,
-                propMap);
-        String jsonObj = event.getEventAsJSON().toString();
+        Event event = new Event(getInstance().apiKey, eventName, uniqueId, propMap);
+        String jsonObj = event.getPayloadString();
 
         if (forceUpload) {
             getInstance().sendEventNow(jsonObj);
         } else {
             addEventToSharedPrefs(jsonObj);
-
         }
 
         if (debug) {
@@ -221,6 +214,48 @@ public class Indicative {
         recordEvent(eventName, null, properties, forceUpload);
     }
 
+    public static void recordAlias() {
+        String newId = getUniqueID();
+        recordAlias(newId, true);
+    }
+
+    public static void recordAlias(String newId) {
+        recordAlias(newId, true);
+    }
+
+    public static void recordAlias(String newId, boolean forceUpload) {
+        String previousId = getDefaultUniqueID();
+        if (previousId != null) {
+            recordAlias(previousId, newId, forceUpload);
+        }
+    }
+
+    public static void recordAlias(String previousId, String newId) {
+        recordAlias(previousId, newId, true);
+    }
+
+    public static void recordAlias(String previousId, String newId, boolean forceUpload) {
+        if (previousId == null || newId == null) {
+            Log.w("INDICATIVE", "Could not create alias between " + previousId + " and " + newId);
+            return;
+        }
+
+        Alias alias = new Alias(getInstance().apiKey, previousId, newId);
+        String payload = alias.getPayloadString();
+
+        if (forceUpload) {
+            getInstance().sendEventNow(payload);
+        } else {
+            addEventToSharedPrefs(payload);
+        }
+
+        if (debug) {
+            Log.v("Indicative",
+                    new StringBuilder("Recorded alias: ").append(payload)
+                            .toString());
+        }
+    }
+
     /**
      * Sets a unique ID to be used on all following events that does not explicitly set one
      *
@@ -231,10 +266,34 @@ public class Indicative {
     }
 
     /**
+     * Sets a unique ID to be used on all following events that does not explicitly set one. Also
+     * send an alias between the generated anonymous UUID and the set unique ID
+     *
+     * @param uniqueID  A unique identifier for the user associated with all events
+     */
+    public static void setUniqueIDAndAlias(String uniqueID) {
+        setUniqueIDToSharedPrefs(uniqueID);
+        recordAlias(uniqueID);
+    }
+
+    /**
      * Clears the unique ID that is used on all events
      */
     public static void clearUniqueID() {
         clearUniqueIDInSharedPrefs();
+    }
+
+    public static void resetAnonymousID() {
+        resetAnonymousIDInSharedPrefs();
+    }
+
+    /**
+     * Clears and regenerates the anonymous ID that is used on all events
+     */
+    public static void reset() {
+        clearUniqueIDInSharedPrefs();
+        resetAnonymousIDInSharedPrefs();
+        removePropertiesFromSharedPrefs();
     }
 
     /**
@@ -317,7 +376,7 @@ public class Indicative {
 		prefs.edit().putInt(jsonObj, eventCount + 1).apply();
 	}
 
-    private static synchronized void setUUIDInUniquePrefs(){
+    private static synchronized void setUUIDInUniquePrefs() {
         if (getInstance().context == null) {
             Log.v("Indicative", "Indicative instance has not been initialized; not setting up unique id");
             return;
@@ -329,6 +388,26 @@ public class Indicative {
             uuid = UUID.randomUUID().toString();
             prefs.edit().putString("uuid", uuid).apply();
         }
+    }
+
+    /**
+     *  Returns the unique ID set by user. If not set, return null
+     */
+    public static String getUniqueID() {
+        if (getInstance().context == null) {
+            Log.v("Indicative", "Indicative instance has not been initialized; not setting up unique id");
+            return null;
+        }
+
+        SharedPreferences prefs = getInstance().uniquePrefs;
+        return prefs.getString(UNIQUE_PREFS, null);
+    }
+
+    /**
+     *  Returns the unique ID set by user. If not set, return the generated anonymous UUID
+     */
+    public static String getActiveUniqueID() {
+        return getUniqueIDFromSharedPrefs();
     }
     
     /**
@@ -376,6 +455,16 @@ public class Indicative {
         }
 
         return uniqueID;
+    }
+
+    private static synchronized void resetAnonymousIDInSharedPrefs() {
+        if (getInstance().context == null) {
+            Log.v("Indicative", "Indicative instance has not been initialized; not resetting anonymous id");
+            return ;
+        }
+
+        SharedPreferences prefs = getInstance().uniquePrefs;
+        prefs.edit().putString("uuid", UUID.randomUUID().toString()).apply();
     }
 
     /**
@@ -511,7 +600,7 @@ public class Indicative {
 		/**
 		 * Creates a JSON representation of the Event.
 		 */
-		public JSONObject getEventAsJSON(){
+		public String getPayloadString() {
 			JSONObject event = new JSONObject();
 			
 			try {
@@ -530,9 +619,54 @@ public class Indicative {
 				Log.v("Indicative", "Event" + e.getMessage(), e.fillInStackTrace());
 			}
 			
-			return event;
+			return event.toString();
 		}
 	}
+
+    /**
+     * Object representing an Indicative Event
+     */
+    public static class Alias {
+
+        public static final String PAYLOAD_PREFIX = "A:";
+
+        private String apiKey;
+        private String previousId;
+        private String newId;
+        private long timestamp;
+
+        /**
+         * Basic constructor.
+         *
+         * @param apiKey			Your project's API key
+         * @param previousId        The anonymousId
+         * @param newId		The userId
+         */
+        public Alias(String apiKey, String previousId, String newId) {
+            this.apiKey = apiKey;
+            this.previousId = previousId;
+            this.newId = newId;
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        /**
+         * Creates a JSON representation of the Event.
+         */
+        public String getPayloadString(){
+            JSONObject alias = new JSONObject();
+
+            try {
+                alias.put("apiKey", apiKey);
+                alias.put("previousId", previousId);
+                alias.put("newId", newId);
+                alias.put("timestamp", timestamp);
+            } catch (JSONException e) {
+                Log.v("Indicative", "Alias" + e.getMessage(), e.fillInStackTrace());
+            }
+
+            return PAYLOAD_PREFIX + alias.toString();
+        }
+    }
 
     /**
      *  Clear the cached events by sending them all now using the ASYNC task.
@@ -603,14 +737,15 @@ public class Indicative {
 
 	public class SendEventAsyncTask extends AsyncTask<Void, Void, Integer> {
 
-		private static final String API_ENDPOINT = "https://api.indicative.com/service/event";
+		private static final String API_EVENT_ENDPOINT = "https://api.indicative.com/service/event";
+        private static final String API_ALIAS_ENDPOINT = "https://api.indicative.com/service/alias";
 
 		private Context context;
-		private String event;
+		private String payload;
 
-		public SendEventAsyncTask(Context context, String event) {
+		public SendEventAsyncTask(Context context, String payload) {
 			this.context = context;
-			this.event = event;
+			this.payload = payload;
 		}
 		
 		/**
@@ -622,33 +757,48 @@ public class Indicative {
 		 */
 		@Override
 		protected Integer doInBackground(Void... params) {
+            payload = payload.trim();
+            String payloadEndpoint = determineEndpointForPayload(payload);
+            payload = processPayload(payload);
+
 			if (debug) {
-				Log.v("Indicative", new StringBuilder("Async Task: Sending event: ")
-						.append(event).toString());
+				Log.v("Indicative", "Async Task: Sending event: " +
+                        payload + " to endpoint " + payloadEndpoint);
 			}
 
 			int statusCode = 0;
 
 			try {
-				HttpParams httpParameters = new BasicHttpParams();
-				HttpConnectionParams.setSocketBufferSize(httpParameters, 8192);
+                HttpURLConnection con = null;
+                DataOutputStream wr = null;
+                boolean successful = false;
 
-				HttpClient client = new DefaultHttpClient(httpParameters);
-				HttpPost post = new HttpPost(API_ENDPOINT);
+                byte[] bodyBytes = payload.getBytes("UTF-8");
 
-				post.setHeader("Content-Type", "application/json");
-				post.addHeader("Indicative-Client", "Android");
+                URL url = new URL(payloadEndpoint);
+                con = (HttpURLConnection) url.openConnection();
+                con.setRequestMethod("POST");
+                con.setRequestProperty("Accept-Charset", "UTF-8");
+                con.addRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                con.setRequestProperty("Content-Length", "" + Integer.toString(bodyBytes.length));
+                con.addRequestProperty("Indicative-Client", "Android");
 
-				post.setEntity(new StringEntity(event, "UTF-8"));
+                // Send post request
+                con.setDoOutput(true);
+                con.setDoInput(true);
+                con.setInstanceFollowRedirects(false);
+                con.setUseCaches(false);
 
-				HttpResponse resp = client.execute(post);
+                wr = new DataOutputStream(con.getOutputStream());
+                wr.write(bodyBytes);
+                wr.flush();
+                wr.close();
 
-				statusCode = resp.getStatusLine().getStatusCode();
+				statusCode = con.getResponseCode();
 
 				if (debug) {
 					Log.v("Indicative", new StringBuilder("Status Code: ").append(Integer.toString(statusCode)).toString());
-					Log.v("Indicative", new StringBuilder("Status Reason: ").append(resp.getStatusLine().getReasonPhrase()).toString());
-					Log.d("Indicative", new StringBuilder("Response Body: ").append(inputStreamToString(resp.getEntity().getContent())).toString());
+					Log.d("Indicative", new StringBuilder("Response Body: ").append(inputStreamToString(con.getInputStream())).toString());
 				}
 
 				return statusCode;
@@ -659,7 +809,7 @@ public class Indicative {
 			return 400;
 		}
 
-		/**
+        /**
 		 * Removes the Event from SharedPreferences if it was posted successfully, 
 		 * or if it received a response indicating a non-retriable error.
 		 */
@@ -669,11 +819,11 @@ public class Indicative {
             if (result != 0 && result != 408 && result != 500) {
                 //do nothing, already removed in sendAllEvents
                 if (debug) {
-                    Log.v("Indicative", new StringBuilder("Async Task: event successful ").append(event).toString());
+                    Log.v("Indicative", new StringBuilder("Async Task: event successful ").append(payload).toString());
                 }
 			} else {
                 //add it back into shared prefs if that's the case
-                addEventToSharedPrefs(event);
+                addEventToSharedPrefs(payload);
                 if (debug) {
                     Log.v("Indicative", " Async Task: Retriable error occured");
                 }
@@ -703,5 +853,25 @@ public class Indicative {
 
 			return total.toString();
 		}
+
+		private String determineEndpointForPayload(String payload) {
+		    if (payload == null || payload.isEmpty()) {
+		        return null;
+            } else if (payload.startsWith(Alias.PAYLOAD_PREFIX)) {
+                return API_ALIAS_ENDPOINT;
+            } else {
+		        return API_EVENT_ENDPOINT;
+            }
+        }
+
+        private String processPayload(String payload) {
+            if (payload == null || payload.isEmpty()) {
+                return null;
+            } else if (payload.startsWith(Alias.PAYLOAD_PREFIX)) {
+                return payload.substring(Alias.PAYLOAD_PREFIX.length());
+            } else {
+                return payload;
+            }
+        }
 	}
 }
