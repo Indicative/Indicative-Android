@@ -1,3 +1,5 @@
+<img src="https://s3.amazonaws.com/static.indicative.com/assets/companies/indicative-v2/png/Logo-Dark.png" width="250" >
+
 Android Client for Indicative's REST API
 
 This REST client creates a JSON representation of your event and posts it to Indicative's Event endpoint.
